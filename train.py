@@ -1,3 +1,5 @@
+from os.path import join, exists
+import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -84,13 +86,17 @@ if params['dataset'] == 'CIGANRope':
     fcn.load_state_dict(torch.load('/home/wilson/causal-infogan/data/FCN_mse'))
     fcn.eval()
 
+root = join('samples', params['dataset'])
+if not exists(root):
+    os.makedirs(root)
+
 # Plot the training images.
 sample_batch = next(iter(dataloader))
 plt.figure(figsize=(10, 10))
 plt.axis("off")
 plt.imshow(np.transpose(vutils.make_grid(
     sample_batch[0].to(device)[ : 100], nrow=10, padding=2, normalize=True).cpu(), (1, 2, 0)))
-plt.savefig('Training Images {}'.format(params['dataset']))
+plt.savefig(join(root, 'Training Images {}'.format(params['dataset'])))
 plt.close('all')
 
 # Initialise the network.
@@ -251,7 +257,7 @@ for epoch in range(params['num_epochs']):
         plt.figure(figsize=(10, 10))
         plt.axis("off")
         plt.imshow(np.transpose(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True), (1,2,0)))
-        plt.savefig("Epoch_%d {}".format(params['dataset']) %(epoch+1))
+        plt.savefig(join(root, "Epoch_%d {}".format(params['dataset']) %(epoch+1)))
         plt.close('all')
 
     # Save network weights.
@@ -277,7 +283,7 @@ with torch.no_grad():
 plt.figure(figsize=(10, 10))
 plt.axis("off")
 plt.imshow(np.transpose(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True), (1,2,0)))
-plt.savefig("Epoch_%d_{}".format(params['dataset']) %(params['num_epochs']))
+plt.savefig(join(root, "Epoch_%d_{}".format(params['dataset']) %(params['num_epochs'])))
 
 # Save network weights.
 torch.save({
@@ -299,7 +305,7 @@ plt.plot(D_losses,label="D")
 plt.xlabel("iterations")
 plt.ylabel("Loss")
 plt.legend()
-plt.savefig("Loss Curve {}".format(params['dataset']))
+plt.savefig(join(root, "Loss Curve {}".format(params['dataset'])))
 
 # Animation showing the improvements of the generator.
 fig = plt.figure(figsize=(10,10))
