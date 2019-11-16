@@ -14,7 +14,7 @@ def get_data(dataset, batch_size):
             transforms.CenterCrop(28),
             transforms.ToTensor()])
 
-        dataset = dsets.MNIST(root+'mnist/', train='train', 
+        dataset = dsets.MNIST(root+'mnist/', train='train',
                                 download=True, transform=transform)
 
     # Get SVHN dataset.
@@ -24,7 +24,7 @@ def get_data(dataset, batch_size):
             transforms.CenterCrop(32),
             transforms.ToTensor()])
 
-        dataset = dsets.SVHN(root+'svhn/', split='train', 
+        dataset = dsets.SVHN(root+'svhn/', split='train',
                                 download=True, transform=transform)
 
     # Get FashionMNIST dataset.
@@ -34,7 +34,7 @@ def get_data(dataset, batch_size):
             transforms.CenterCrop(28),
             transforms.ToTensor()])
 
-        dataset = dsets.FashionMNIST(root+'fashionmnist/', train='train', 
+        dataset = dsets.FashionMNIST(root+'fashionmnist/', train='train',
                                 download=True, transform=transform)
 
     # Get CelebA dataset.
@@ -49,9 +49,32 @@ def get_data(dataset, batch_size):
 
         dataset = dsets.ImageFolder(root=root+'celeba/', transform=transform)
 
+    elif dataset == 'CIGANRope':
+        transform = transforms.Compose([
+            transforms.Resize(64),
+            transforms.CenterCrop(64),
+            transforms.ToTensor(),
+        ])
+        dataset = dsets.ImageFolder(root='/home/causal-infogan/data/rope/full_data', transform=transform)
+
+    elif dataset == 'Rope':
+        def filter_background(x):
+            x[:, (x < 0.3).any(dim=0)] = 0.0
+            return x
+
+        transform = transforms.Compose([
+            transforms.Resize(64),
+            transforms.CenterCrop(64),
+            transforms.ToTensor(),
+            filter_background,
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            lambda x: x.mean(dim=0)[None, :, :],
+        ])
+        dataset = dsets.ImageFolder(root='/home/causal-infogan/data/rope/full_data', transform=transform)
+
     # Create dataloader.
-    dataloader = torch.utils.data.DataLoader(dataset, 
-                                            batch_size=batch_size, 
+    dataloader = torch.utils.data.DataLoader(dataset,
+                                            batch_size=batch_size,
                                             shuffle=True)
 
     return dataloader

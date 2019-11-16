@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.utils as vutils
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import time
@@ -60,6 +62,18 @@ elif(params['dataset'] == 'FashionMNIST'):
     params['num_dis_c'] = 1
     params['dis_c_dim'] = 10
     params['num_con_c'] = 2
+elif (params['dataset'] == 'CIDGANRope'):
+    params['num_z'] = 2
+    params['num_dis_c'] = 0
+    params['dis_c_dim'] = 0
+    params['num_con_c'] = 7
+elif (params['dataset'] == 'Rope'):
+    params['num_z'] = 2
+    params['num_dis_c'] = 0
+    params['dis_c_dim'] = 0
+    params['num_con_c'] = 7
+else:
+    raise Exception('Invalid dataset:', params['dataset'])
 
 # Plot the training images.
 sample_batch = next(iter(dataloader))
@@ -196,7 +210,7 @@ for epoch in range(params['num_epochs']):
         # Check progress of training.
         if i != 0 and i%100 == 0:
             print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f'
-                  % (epoch+1, params['num_epochs'], i, len(dataloader), 
+                  % (epoch+1, params['num_epochs'], i, len(dataloader),
                     D_loss.item(), G_loss.item()))
 
         # Save the losses for plotting.
