@@ -10,7 +10,7 @@ import matplotlib.animation as animation
 import time
 import random
 
-from models.mnist_model import Generator, Discriminator, DHead, QHead
+from models.fcn_mse import FCN_mse
 from dataloader import get_data
 from utils import *
 from config import params
@@ -23,6 +23,10 @@ elif(params['dataset'] == 'CelebA'):
     from models.celeba_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'FashionMNIST'):
     from models.mnist_model import Generator, Discriminator, DHead, QHead
+elif (params['dataset'] == 'CIGANRope'):
+    from models.rope_model import Generator, Discriminator, DHead, QHead
+elif (params['dataset'] == 'Rope'):
+    from models.rope_model import Generator, Discriminator, DHead, QHead
 
 # Set random seed for reproducibility.
 seed = 1123
@@ -62,7 +66,7 @@ elif(params['dataset'] == 'FashionMNIST'):
     params['num_dis_c'] = 1
     params['dis_c_dim'] = 10
     params['num_con_c'] = 2
-elif (params['dataset'] == 'CIDGANRope'):
+elif (params['dataset'] == 'CIGANRope'):
     params['num_z'] = 2
     params['num_dis_c'] = 0
     params['dis_c_dim'] = 0
@@ -74,6 +78,11 @@ elif (params['dataset'] == 'Rope'):
     params['num_con_c'] = 7
 else:
     raise Exception('Invalid dataset:', params['dataset'])
+
+if params['dataset'] == 'CIGANRope':
+    fcn = FCN_mse(2).cuda()
+    fcn.load_state_dict(torch.load('/home/wilson/causal-infogan/data/FCN_mse'))
+    fcn.eval()
 
 # Plot the training images.
 sample_batch = next(iter(dataloader))
@@ -144,6 +153,7 @@ print("-"*25)
 
 start_time = time.time()
 iters = 0
+saved = False
 
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
@@ -153,6 +163,14 @@ for epoch in range(params['num_epochs']):
         b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
         real_data = data.to(device)
+
+        if params['dataset'] == 'CIGANRope':
+            real_data = fcn(real_data).detach()
+            real_data = torch.clamp(2 * (real_data - 0.5), -1 + 1e-3, 1 - 1e-3)
+
+        if not saved:
+            vutils.save_image(real_data * 0.5 + 0.5, 'example_dset_{}.png'.format(params['dataset']))
+            saved = True
 
         # Updating discriminator and DHead
         optimD.zero_grad()
